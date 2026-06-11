@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="VoiceMatch AI - A state-of-the-art voice comparison and projection tool utilizing Voice Comparison app voice embeddings and UMAP visualization.">
+    <title>VoiceMatch AI — Voice Comparison & Projection</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navigation / Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-waveform-lines pulse"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>VoiceMatch <span class="accent">AI</span></h1>
+                    <p class="subtitle">Voice Comparison app-Powered Voice Similarity Analyzer</p>
+                </div>
+            </div>
+            <div class="header-status">
+                <span class="status-indicator online"></span>
+                <span class="status-text">Server Active</span>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Grid -->
+        <main class="dashboard-grid">
+            
+            <!-- Sidebar: Controls & Uploads -->
+            <section class="panel-sidebar">
+                <div class="card glass-card">
+                    <h2 class="card-title"><i class="fa-solid fa-microphone-lines"></i> 1. Reference Voice</h2>
+                    <p class="card-desc">Choose a ground truth reference audio to compare others against.</p>
+                    
+                    <div class="upload-zone" id="ref-dropzone">
+                        <input type="file" id="ref-input" accept="audio/*,video/*" class="file-input">
+                        <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                        <p class="upload-text">Drag & drop or <span>browse</span></p>
+                        <p class="upload-hint">WAV, MP3, MP4, M4A, etc.</p>
+                    </div>
+                    
+                    <div class="selected-file-display hidden" id="ref-file-display">
+                        <div class="file-info">
+                            <i class="fa-solid fa-file-audio text-accent"></i>
+                            <span class="file-name" id="ref-file-name">filename.wav</span>
+                        </div>
+                        <audio id="ref-audio-player" class="audio-mini" controls></audio>
+                    </div>
+                </div>
+
+                <div class="card glass-card margin-top">
+                    <h2 class="card-title"><i class="fa-solid fa-users-rectangle"></i> 2. Comparison voices</h2>
+                    <p class="card-desc">Add one or more voice files to evaluate similarity.</p>
+                    
+                    <div class="upload-zone" id="comp-dropzone">
+                        <input type="file" id="comp-input" accept="audio/*,video/*" multiple class="file-input">
+                        <i class="fa-solid fa-folder-open upload-icon"></i>
+                        <p class="upload-text">Drag & drop or <span>browse</span></p>
+                        <p class="upload-hint">Select multiple files</p>
+                    </div>
+
+                    <div class="file-list-container hidden" id="comp-list-container">
+                        <h3>Files Queue (<span id="comp-count">0</span>)</h3>
+                        <ul class="file-list" id="comp-file-list">
+                            <!-- Dynamic list items will go here -->
+                        </ul>
+                    </div>
+
+                    <div class="actions-group">
+                        <button id="btn-clear" class="btn btn-secondary"><i class="fa-solid fa-trash-can"></i> Clear All</button>
+                        <button id="btn-run" class="btn btn-primary"><i class="fa-solid fa-circle-play"></i> Run Comparison</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Main Content Area: Charts & Tables -->
+            <section class="panel-main">
+                
+                <!-- KPI / Stats Cards -->
+                <div class="stats-row">
+                    <div class="kpi-card glass-card">
+                        <div class="kpi-icon icon-blue"><i class="fa-solid fa-database"></i></div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Analyzed Items</span>
+                            <span class="kpi-value" id="stat-count">0</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card glass-card">
+                        <div class="kpi-icon icon-green"><i class="fa-solid fa-star"></i></div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Best Match Score</span>
+                            <span class="kpi-value" id="stat-best-score">-</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card glass-card">
+                        <div class="kpi-icon icon-purple"><i class="fa-solid fa-music"></i></div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Best Match File</span>
+                            <span class="kpi-value file-kpi" id="stat-best-file">N/A</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Results Section -->
+                <div class="results-grid">
+                    
+                    <!-- Similarity Table -->
+                    <div class="card glass-card flex-column">
+                        <h2 class="card-title"><i class="fa-solid fa-list-check"></i> Voice Match Analysis</h2>
+                        <div class="table-responsive">
+                            <table class="results-table" id="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Voice Filename</th>
+                                        <th>Similarity Score</th>
+                                        <th>Match Status</th>
+                                        <th>Listen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body">
+                                    <tr class="empty-state">
+                                        <td colspan="4">
+                                            <i class="fa-solid fa-circle-info"></i> Upload files and run comparison to view similarity rankings.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- UMAP 2D Projection Map -->
+                    <div class="card glass-card flex-column">
+                        <div class="chart-header">
+                            <h2 class="card-title"><i class="fa-solid fa-circle-dot"></i> Voice Embedding Space (UMAP)</h2>
+                            <div class="chart-actions">
+                                <a id="btn-dl-csv" href="#" class="btn-icon disabled" title="Download CSV Data"><i class="fa-solid fa-file-csv"></i></a>
+                                <a id="btn-dl-png" href="#" class="btn-icon disabled" title="Download PNG Plot"><i class="fa-solid fa-file-image"></i></a>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="umapChart"></canvas>
+                            <div class="chart-empty" id="chart-empty-overlay">
+                                <i class="fa-solid fa-chart-line-up"></i>
+                                <p>Projection will be rendered here.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live System Log terminal -->
+                <div class="card glass-card console-card margin-top">
+                    <div class="console-header">
+                        <div class="console-title"><span class="terminal-dot"></span> System Console Output</div>
+                        <button id="btn-clear-console" class="console-btn"><i class="fa-solid fa-terminal"></i> Clear Logs</button>
+                    </div>
+                    <div class="console-body" id="console-log">
+                        <span class="console-line system">[System] Application loaded. Awaiting audio files...</span>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- Spinner / Loading Overlay -->
+    <div id="loader-overlay" class="loader-overlay hidden">
+        <div class="loader-spinner">
+            <div class="wave-spinner">
+                <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <p id="loader-status">Running comparisons...</p>
+            <p class="loader-sub">Extracting neural embeddings and computing UMAP projection</p>
+        </div>
+    </div>
+
+    <!-- Custom JavaScript logic -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
