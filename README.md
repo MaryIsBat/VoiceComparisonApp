@@ -125,7 +125,8 @@ Voice Comparison app has many uses:
     Loss function: You can backpropagate through the voice encoder model and use it as a perceptual loss for your deep learning model! The voice encoder is written in PyTorch.
 
   📂 Project Workspace Structure
-  Voice Comparison app/
+Voice Comparison app/
+```
 │
 ├── web_app.py              # Main Flask application (APIs, audio pipeline, caching)
 ├── requirements.txt         # List of dependencies (Flask, PyTorch, UMAP, etc.)
@@ -137,3 +138,4 @@ Voice Comparison app has many uses:
 │
 └── templates/
     └── index.html           # Front-end dashboard user interface
+```
